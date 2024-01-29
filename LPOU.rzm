@@ -1,0 +1,191 @@
+#
+# Copyright (c) 2024 Gonzalo J. Carracedo <BatchDrake@gmail.com>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+parameter L1                      = 252e-3;
+parameter L2                      = 200e-3;
+parameter DX                      = 400e-3;
+parameter SCREW_LENGTH            = 1e-2;
+parameter MIRROR_VERTICAL_SPACING = 130e-3;
+parameter MIRROR_THICKNESS        = 5e-3;
+parameter NGSS_FP_DIST_TO_M1      = 493e-3;
+parameter MIRROR_OFFSET           = 46e-3;
+parameter MOV_A                   = 0;
+parameter PD                      = 2578e-3;
+parameter PP                      = 45765e-3;
+
+dof SCREW_ERROR           = 0;
+dof x  (-200e-3, 20e-3)   = 0;
+dof y  (-200e-3, 200e-3)  = 0;
+
+parameter LPOA1_FOCUS_LENS_HEIGHT = 0.2454;
+
+import "Heidenhain/SRP5080.rzi";
+import "Heidenhain/MRP8080.rzi";
+
+element ShoulderLink {
+  StlMesh arm(file = "ShoulderLink.stl");
+  
+  translate(dx = L1)
+    port end;
+  
+  translate(dz = -MIRROR_VERTICAL_SPACING / 2 + MIRROR_OFFSET) {
+    translate(dz = - MIRROR_OFFSET)
+      port output;
+    
+  # Definition for M4. This is the output mirror.
+    rotate(-135, 0, 1, 0) {
+      translate(dz = -SCREW_LENGTH - MIRROR_THICKNESS) {
+        rotate(90, 0, 0, 1) {
+          Tripod tripod1(
+            leg1 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+            leg2 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+            leg3 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+            radius = 6e-3, legDiameter = 3e-3);
+          on surface of tripod1 FlatMirror M4(thickness = MIRROR_THICKNESS, radius = 8.5e-3);
+        }
+      }
+    }
+
+  # Definition for M3
+    translate(dx = L1) {
+      rotate(45, 0, 1, 0) {
+        translate(dz = -SCREW_LENGTH - MIRROR_THICKNESS) {
+          rotate(90, 0, 0, 1) {
+            Tripod tripod2(
+              leg1 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+              leg2 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+              leg3 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+              radius = 14.5e-3, legDiameter = 3e-3);
+            on surface of tripod2 FlatMirror M3(thickness = MIRROR_THICKNESS, radius = 17e-3);
+          }
+        }
+      }
+    }
+  }
+
+  path M3 to M4;
+}
+
+element ElbowLink {
+  StlMesh forearm(file = "ElbowLink.stl");
+
+  translate(dx = L2)
+    port end;
+
+  translate(dz = MIRROR_VERTICAL_SPACING / 2 + MIRROR_OFFSET - SRP5080_HEIGHT) {
+    
+# Definition for M2
+    rotate(-135, 0, 1, 0) {
+      translate(dz = -SCREW_LENGTH - MIRROR_THICKNESS) {
+        rotate(90, 0, 0, 1) {
+          Tripod tripod1(
+            leg1 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+            leg2 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+            leg3 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+            radius = 14.5e-3, legDiameter = 3e-3);
+          on surface of tripod1 FlatMirror M2(thickness = MIRROR_THICKNESS, radius = 17e-3);
+        }
+      }
+    }
+    
+# Definition for M1
+    translate(dx = L2) {
+      rotate(45, 0, 1, 0) {
+        translate(dz = -SCREW_LENGTH - MIRROR_THICKNESS) {
+          rotate(90, 0, 0, 1) {
+            Tripod tripod2(
+              leg1 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+              leg2 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+              leg3 = SCREW_LENGTH + randn(0, SCREW_ERROR),
+              radius = 24e-3, legDiameter = 3e-3);
+            on surface of tripod2 FlatMirror M1(thickness = MIRROR_THICKNESS, radius = 26.5e-3);
+          }
+        }
+      }
+    }
+  }
+
+  path M1 to M2;
+}
+
+element LPOA1 {
+  dof x_m = 0;
+  dof y_m = 0;
+
+  translate(dx = -DX) {
+    MRP8080 shoulderMotor(
+      theta = rad2deg(
+        - atan2(y_m, x_m + DX)
+        - atan2(
+          L2 * sqrt(1 - ((((x_m + DX)^2 + y_m^2) - L1^2 - L2^2) / (2 * L1 * L2))^2),
+          L1 + (((x_m + DX)^2 + y_m^2) - L1^2 - L2^2) / (2 * L1))));
+    
+    on bottomMount of shoulderMotor {
+      ShoulderLink arm;
+
+      on end of arm {
+        rotate (180, 1, 0, 0)
+          rotate (180, 0, 0, 1)
+            SRP5080Rev elbowMotor(theta = rad2deg(acos(((x_m + DX)^2 + y_m^2 - L1^2 - L2^2) / (2 * L1 * L2))));
+        
+        on bottomMount of elbowMotor {
+          ElbowLink foreArm;
+        }
+      }
+    }
+
+    translate(dz = - NGSS_FP_DIST_TO_M1 + MIRROR_VERTICAL_SPACING / 2)
+      port output;
+  }
+
+  path foreArm to arm;
+}
+
+LPOA1 lpoa1(x + MOV_A * (.1 * cos(.1 * t) - .2), y + MOV_A * .15 * sin(.1 * t));
+
+# Place a detector on the object plane of the relay lens
+on output of lpoa1 {
+  translate(dz = LPOA1_FOCUS_LENS_HEIGHT) rotate(180, 1, 0, 0) {
+    ConvexLens relayLens(thickness = 2.5e-3, curvature = 10e-2);
+    on imagePlane of relayLens rotate(180, 1, 0, 0)
+      Detector lpoa1Detector (cols = 255, rows = 255);
+  }
+}
+
+
+translate(dz = -NGSS_FP_DIST_TO_M1 + MIRROR_VERTICAL_SPACING / 2) {
+  port ngssFocalPlane;
+  ApertureStop technicalField(radius = .2, width = .5, height = .5);
+  translate(dz = PP) ApertureStop nominalPupil(radius = .5 * PD, width = PD, height = PD);
+  
+  Detector scienceDetector;
+}
+
+path lpoa1 to relayLens to lpoa1Detector;
+path science scienceDetector;
+

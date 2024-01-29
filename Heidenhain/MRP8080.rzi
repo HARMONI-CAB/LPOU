@@ -1,0 +1,64 @@
+#
+# Copyright (c) 2024 Gonzalo J. Carracedo <BatchDrake@gmail.com>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+parameter MRP8080_SYSTEM_ACCURACY    = 0.00027777778; # deg - PLEASE REVIEW
+parameter MRP8080_REPEATABILITY      = 5.5555555e-05; # deg
+parameter MRP8080_RMS_POSITION_NOISE = 8.3333333e-07; # deg
+parameter MRP8080_AXIS_WOBBLE        = 0.00013888888; # deg
+parameter MRP8080_AXIAL_RUNOUT       = 4e-06;         # m
+parameter MRP8080_RADIAL_RUNOUT      = 0.35e-06;      # m
+
+import "scale.rzi";
+
+element MRP8080 {
+  script "MRP8080.py";
+  dof theta = 0;
+  
+  StlMesh stator(file = "MRP8080_Stator.stl", red = 1, green = 0, blue = 0);
+
+  rotate(theta, 0, 0, 1) {
+    # Model runout
+    translate(
+      dx = spc_scale * MRP8080_RADIAL_RUNOUT * MRP8080_radial_runout(theta),
+      dz = spc_scale * MRP8080_AXIAL_RUNOUT * MRP8080_axial_runout(theta)) {
+      # Model wobbling
+      rotate(ang_scale * MRP8080_AXIS_WOBBLE * MRP8080_wobble(theta), 0, 1, 0) {
+        translate (dz = 31.860e-3) {
+          StlMesh mrp8080(file = "MRP8080.stl", red = .5, green = .5, blue = .5, specRed = 1, specGreen = 1, specBlue = 1);
+          StlMesh mrp8082(file = "MRP8082.stl");
+          StlMesh mrp8083(file = "MRP8083.stl");
+        }
+
+        port bottomMount;
+      }
+    }
+
+    # Ideal mount
+    port idealBottomMount;
+  }
+}

@@ -1,0 +1,25 @@
+{
+    "Ni": 10,
+    "Nj": 10,
+    "azimuth": "0",
+    "beam": "CONVERGING",
+    "clearDetector": false,
+    "detector": "",
+    "diameter": "40e-3",
+    "dofs": {
+    },
+    "elevation": "90",
+    "fNum": "17.37",
+    "focalPlane": "ngssFocalPlane",
+    "offsetX": "0",
+    "offsetY": "0",
+    "overwrite": false,
+    "path": "",
+    "rays": 1000,
+    "ref": "FOCAL_PLANE",
+    "refAperture": "200e-3",
+    "saveArtifacts": false,
+    "saveDetector": "",
+    "saveDir": "artifacts",
+    "type": "ONE_SHOT"
+}
