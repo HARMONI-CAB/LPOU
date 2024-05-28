@@ -1,0 +1,69 @@
+#
+# Copyright (c) 2024 Gonzalo J. Carracedo <BatchDrake@gmail.com>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+import "LPOA1.rzi";
+import "offner.rzi";
+
+dof x  (-200e-3, 20e-3)   = 0;
+dof y  (-200e-3, 200e-3)  = 0;
+dof focus (-1e-2, 1e-2)   = 0;
+
+LPOA1 lpoa1 (x, y);
+
+parameter PD                      = 2578e-3;
+parameter PP                      = 45765e-3;
+
+parameter LOBFM_RADIUS            = 2.5e-2;
+parameter LOBFM_THICKNESS         = 2e-3;
+parameter OFFNER_SEP              = 1e-1;
+parameter OFFNER_FLENGTH          = 1;
+
+translate (dz = MRP8080_HEIGHT / 2 + LPOA1_SHCS_TO_SFMCS + LPOA1_ESMCS_TO_EFMCS + NGSS_FP_POMCS_TO_RFP) {
+  port ngssFocalPlane;
+  ApertureStop technicalField(radius = .2, width = .5, height = .5);
+  translate(dz = PP) ApertureStop nominalPupil(radius = .5 * PD, width = PD, height = PD);
+  
+  Detector scienceDetector;
+}
+
+on LOBFMCS of lpoa1 {
+  rotate(45, 1, 0, 0)
+    translate(dz = -LOBFM_THICKNESS)
+      FlatMirror LOBFM(radius = LOBFM_RADIUS, thickness = LOBFM_THICKNESS);
+
+  rotate(90, 1, 0, 0)
+    translate(dy = -OFFNER_SEP)
+      Offner offner(flength = OFFNER_FLENGTH, separation = OFFNER_SEP);
+
+  on output of offner
+    translate (dz = LPOA1_ARM_FP_DISTANCE + abs(LPOA1_SFMCS_TO_LOBFM + focus))
+      Detector pointingDetector;
+}
+
+path lpoa1 to LOBFM to offner to pointingDetector;
+path science scienceDetector;
