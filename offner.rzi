@@ -1,0 +1,61 @@
+#
+# Copyright (c) 2024 Gonzalo J. Carracedo <BatchDrake@gmail.com>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+element Offner {
+  dof flength    = 15e-2; # Focal length of the convex mirror
+  dof separation = 1e-1;  # Distance between input focal planes
+  dof cnRadius   = 1e-1;
+  dof cvRadius   = .5e-1;
+  
+  # First concave mirror
+  rotate(-rad2deg(asin(.5 * separation / flength)), 1, 0, 0)
+    translate(dz = 2 * flength)
+      rotate(180, 1, 0, 0)
+        SphericalMirror M1(flength = flength, radius = cnRadius);
+
+  # Convex mirror
+  translate(dz = 2 * flength ^2 / sqrt(4 * flength^2 - separation^2))
+    SphericalMirror M2(flength = - flength ^2 / sqrt(4 * flength^2 - separation^2), radius = cvRadius);
+
+  # Output concave mirror
+  rotate(rad2deg(asin(.5 * separation / flength)), 1, 0, 0)
+    translate(dz = 2 * flength)
+      rotate(180, 1, 0, 0) SphericalMirror M3(flength = flength, radius = cnRadius);
+
+  # Input aperture
+  translate(dy =  separation)
+    rotate(180, 1, 0, 0)
+      port input;
+
+  # Output aperture
+  translate(dy = -separation)
+    port output;
+  
+  # Default optical path
+  path M1 to M2 to M3;
+}

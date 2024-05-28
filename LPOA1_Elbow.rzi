@@ -1,0 +1,86 @@
+#
+# Copyright (c) 2024 Gonzalo J. Carracedo <BatchDrake@gmail.com>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+import "LPOA1_Geometry.rzi";
+
+parameter POM_THERMAL_Y = 3.616e-6;
+
+# Elbow link is centered around Elbow CS
+
+element ElbowLink {
+  # Optical elements and frames
+  translate (dz = LPOA1_ESMCS_TO_EFMCS - LPOA1_ESMCS_TO_ELCS) {
+    port EFMCS;
+
+    # EFM (Elbow Fold Mirror)
+    rotate(-135, 1, 0, 0) {
+      translate(dz = -LPOA1_BOLT_LENGTH - LPOA1_EFM_THICKNESS) {
+        Tripod tripod1(
+          leg1 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+          leg2 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+          leg3 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+          radius = 14.5e-3,
+          legDiameter = 3e-3);
+        on surface of tripod1
+          FlatMirror EFM(
+            thickness = LPOA1_EFM_THICKNESS,
+            radius = 17e-3);
+      }
+    }
+
+    translate (dy = LPOA1_EFMCS_TO_POMCS) {
+      port POMCS;
+
+      translate (dy = randu(-POM_THERMAL_Y, POM_THERMAL_Y)) rotate(45, 1, 0, 0) {
+        translate(dz = -LPOA1_BOLT_LENGTH - LPOA1_POM_THICKNESS) {
+          Tripod tripod2(
+            leg1 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+            leg2 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+            leg3 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+            radius = 24e-3,
+            legDiameter = 3e-3);
+          on surface of tripod2
+            FlatMirror POM(
+              thickness = LPOA1_POM_THICKNESS,
+              radius = 26.5e-3);
+        }
+      }
+    }
+  }
+  
+  
+  # Mechanical elements
+  translate (dz = SRP5080_HEIGHT / 2 + LPOA1_FOREARM_Z_OFFSET) {
+    translate (dy = LPOA1_L2) port end;
+    
+    rotate (90, 0, 0, 1) StlMesh arm(file = "LPOA1_Elbow.stl");
+  }
+
+  path POM to EFM;
+}
+

@@ -1,0 +1,51 @@
+#
+# Copyright (c) 2024 Gonzalo J. Carracedo <BatchDrake@gmail.com>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+parameter LPOA1_L1              = 252e-3;   # Length of the shoulder link
+parameter LPOA1_L2              = 200e-3;   # Length of the elbow link
+
+parameter LPOA1_DX              = 400e-3;   # Shoulder distance
+
+parameter LPOA1_SHCS_TO_SFMCS   = -44.7e-3; # Z distance from the shoulder CS to the SFM CS
+parameter LPOA1_SFMCS_TO_ESMCS  = 252e-3;   # Y distance from SFM CS to ESM CS
+parameter LPOA1_ESMCS_TO_ELCS   = 51.5e-3;  # Z distance from ESM CS to Elbow CS
+parameter LPOA1_ESMCS_TO_EFMCS  = 103e-3;   # Z distance from ESM CS to EFM CS
+parameter LPOA1_EFMCS_TO_POMCS  = 200e-3;   # Y distance from EFM CS TO POM CS
+parameter LPOA1_ARM_Z_OFFSET     = 0; # Z distance from Shouler CS at which the arm is located
+parameter LPOA1_FOREARM_Z_OFFSET = 0;       # Z distance with respect to SRP5080's height
+
+parameter LPOA1_ARM_FP_DISTANCE  = 70e-3;
+
+parameter LPOA1_BOLT_LENGTH    = 1e-2;
+parameter LPOA1_BOLT_ERROR     = 0;
+
+parameter LPOA1_SFM_THICKNESS  = 5e-3;
+parameter LPOA1_ESM_THICKNESS  = 5e-3;
+parameter LPOA1_EFM_THICKNESS  = 5e-3;
+parameter LPOA1_POM_THICKNESS  = 5e-3;
+

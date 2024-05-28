@@ -1,0 +1,88 @@
+#
+# Copyright (c) 2024 Gonzalo J. Carracedo <BatchDrake@gmail.com>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+import "LPOA1_Geometry.rzi";
+
+# Shoulder link is centered around Shoulder CS
+
+element ShoulderLink {
+  # Optical elements and frames
+  translate (dz = LPOA1_SHCS_TO_SFMCS) {
+    port SFMCS;
+    
+    # SFM (Shoulder Fold Mirror)
+    rotate(-135, 1, 0, 0) {
+      translate(dz = -LPOA1_BOLT_LENGTH - LPOA1_SFM_THICKNESS) {
+        Tripod tripod1(
+          leg1 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+          leg2 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+          leg3 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+          radius = 6e-3,
+          legDiameter = 3e-3);
+        on surface of tripod1
+          FlatMirror SFM(
+            thickness = LPOA1_SFM_THICKNESS,
+            radius = 8.5e-3);
+      }
+    }
+
+    translate (dy = LPOA1_ARM_FP_DISTANCE)
+      rotate (-90, 1, 0, 0)
+        Detector intermediateFp;
+    
+    translate (dy = LPOA1_SFMCS_TO_ESMCS) {
+      port ESMCS;
+      
+      rotate(45, 1, 0, 0) {
+        translate(dz = -LPOA1_BOLT_LENGTH - LPOA1_ESM_THICKNESS) {
+          Tripod tripod2(
+            leg1 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+            leg2 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+            leg3 = randn(LPOA1_BOLT_LENGTH, LPOA1_BOLT_ERROR),
+            radius = 14.5e-3,
+            legDiameter = 3e-3);
+          on surface of tripod2 FlatMirror ESM(
+            thickness = LPOA1_ESM_THICKNESS,
+            radius = 17e-3);
+        }
+      }
+    }   
+  }
+  
+  # Mechanical elements
+  translate (dz = -MRP8080_HEIGHT / 2 + LPOA1_ARM_Z_OFFSET) {
+    translate (dy = LPOA1_L1) port end;
+    
+    rotate (90, 0, 0, 1) StlMesh arm(file = "LPOA1_Shoulder.stl");
+  }
+
+  path ESM to intermediateFp to SFM;
+  path ESM ESM;
+  path SFM SFM;
+}
+
