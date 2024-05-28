@@ -32,6 +32,8 @@ parameter MRP8080_RMS_POSITION_NOISE = 8.3333333e-07; # deg
 parameter MRP8080_AXIS_WOBBLE        = 0.00013888888; # deg
 parameter MRP8080_AXIAL_RUNOUT       = 4e-06;         # m
 parameter MRP8080_RADIAL_RUNOUT      = 0.35e-06;      # m
+parameter MRP8080_STATOR_HEIGHT      = 54e-3;         # m
+parameter MRP8080_HEIGHT             = 32.6e-3;       # m
 
 import "scale.rzi";
 
@@ -42,12 +44,12 @@ element MRP8080 {
   StlMesh stator(file = "MRP8080_Stator.stl", red = 1, green = 0, blue = 0);
 
   rotate(theta, 0, 0, 1) {
-    # Model runout
-    translate(
-      dx = spc_scale * MRP8080_RADIAL_RUNOUT * MRP8080_radial_runout(theta),
+    # Model accuracy and runout
+    rotate(randu(-MRP8080_SYSTEM_ACCURACY, MRP8080_SYSTEM_ACCURACY), 0, 0, 1) translate(
+      dy = spc_scale * MRP8080_RADIAL_RUNOUT * MRP8080_radial_runout(theta),
       dz = spc_scale * MRP8080_AXIAL_RUNOUT * MRP8080_axial_runout(theta)) {
       # Model wobbling
-      rotate(ang_scale * MRP8080_AXIS_WOBBLE * MRP8080_wobble(theta), 0, 1, 0) {
+      rotate(ang_scale * MRP8080_AXIS_WOBBLE * MRP8080_wobble(theta), 1, 0, 0) {
         translate (dz = 31.860e-3) {
           StlMesh mrp8080(file = "MRP8080.stl", red = .5, green = .5, blue = .5, specRed = 1, specGreen = 1, specBlue = 1);
           StlMesh mrp8082(file = "MRP8082.stl");
@@ -55,10 +57,12 @@ element MRP8080 {
         }
 
         port bottomMount;
+        translate (dz = MRP8080_HEIGHT / 2) port rotationCenter;
       }
     }
 
-    # Ideal mount
-    port idealBottomMount;
+    # Nominal ports
+    port nominalBottomMount;
+    translate (dz = MRP8080_HEIGHT / 2) port nominalRotationCenter;
   }
 }

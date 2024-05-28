@@ -40,19 +40,25 @@ element SRP5080 {
   script "SRP5080.py";
   dof     theta = 0;
 
-  rotate(90, 0, 1, 0) StlMesh bearing(file = "SRP5080_Bearing.stl", red = 1, green = .65, blue = 0);
+  rotate(-90, 0, 1, 0)
+    StlMesh bearing(file = "SRP5080_Bearing.stl", red = 1, green = .65, blue = 0);
   
   rotate(theta, 0, 0, 1) {
-    # Model runout
-    translate(
-      dx = spc_scale * SRP5080_RADIAL_RUNOUT * SRP5080_radial_runout(theta),
+    # Model accuracy and runout
+    rotate(randu(-SRP5080_SYSTEM_ACCURACY, SRP5080_SYSTEM_ACCURACY), 0, 0, 1) translate(
+      dy = spc_scale * SRP5080_RADIAL_RUNOUT * SRP5080_radial_runout(theta),
       dz = spc_scale * SRP5080_AXIAL_RUNOUT * SRP5080_axial_runout(theta)) {
       # Model wobbling
-      rotate(ang_scale * SRP5080_AXIS_WOBBLE * SRP5080_wobble(theta), 0, 1, 0) {
-        rotate(90, 0, 1, 0) StlMesh shaft(file = "SRP5080_Shaft.stl", red = 1, green = .65, blue = 0);
+      rotate(ang_scale * SRP5080_AXIS_WOBBLE * SRP5080_wobble(theta), 1, 0, 0) {
+        rotate(-90, 0, 1, 0) StlMesh shaft(file = "SRP5080_Shaft.stl", red = 1, green = .65, blue = 0);
         translate(dz = SRP5080_HEIGHT) port topMount;
+        translate(dz = SRP5080_HEIGHT / 2) port rotationCenter;
       }
     }
+
+    # Nominal ports
+    translate(dz = SRP5080_HEIGHT) port nominalTopMount;
+    translate(dz = SRP5080_HEIGHT / 2) port nominalRotationCenter;
   }
 }
 
@@ -65,7 +71,7 @@ element SRP5080Rev {
     rotate(-ang_scale * SRP5080_AXIS_WOBBLE * SRP5080_wobble(theta), 0, 1, 0) {
       # Model runout
       translate(
-        dx = -spc_scale * SRP5080_RADIAL_RUNOUT * SRP5080_radial_runout(theta),
+        dy = -spc_scale * SRP5080_RADIAL_RUNOUT * SRP5080_radial_runout(theta),
         dz = -spc_scale * SRP5080_AXIAL_RUNOUT * SRP5080_axial_runout(theta)) {
         rotate(-theta, 0, 0, 1) {
           rotate(90, 0, 1, 0) StlMesh bearing(file = "SRP5080_Bearing.stl", red = 1, green = .65, blue = 0);

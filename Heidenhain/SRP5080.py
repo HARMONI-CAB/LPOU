@@ -31,7 +31,7 @@ import numpy  as np
 
 SRP5080_WOBBLE_PHASE        = 0   # deg
 SRP5080_AXIAL_RUNOUT_PHASE  = 90  # deg
-SRP5080_RADIAL_RUNOUT_PHASE = 0   # deg
+SRP5080_RADIAL_RUNOUT_PHASE =  0  # deg
 SRP5080_PERIODICITY         = 20  # dimensionless
 
 def SRP5080_wobble(theta):
