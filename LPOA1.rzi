@@ -1,0 +1,77 @@
+#
+# Copyright (c) 2024 Gonzalo J. Carracedo <BatchDrake@gmail.com>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+import "LPOA1_Shoulder.rzi";
+import "LPOA1_Elbow.rzi";
+
+import "Heidenhain/SRP5080.rzi";
+import "Heidenhain/MRP8080.rzi";
+
+#
+# LPOA1_L2 + LPOA1_ESMCS_TO_EFMCS + (LPOA1_L1 - LPOA1_ARM_FP_DISTANCE)
+#
+parameter NGSS_FP_POMCS_TO_RFP = -485e-3;
+parameter LPOA1_SFMCS_TO_LOBFM = -70e-3;
+
+element LPOA1 {
+  dof x_m = 0;
+  dof y_m = 0;
+
+  translate(dx = -LPOA1_DX) rotate (-90, 0, 0, 1) {
+    MRP8080 shoulderMotor(
+      theta = rad2deg(
+        atan2(y_m, x_m + LPOA1_DX) + atan2(
+          LPOA1_L2 * sqrt(1 - ((((x_m + LPOA1_DX)^2 + y_m^2) - LPOA1_L1^2 - LPOA1_L2^2) / (2 * LPOA1_L1 * LPOA1_L2))^2),
+          LPOA1_L1 + (((x_m + LPOA1_DX)^2 + y_m^2) - LPOA1_L1^2 - LPOA1_L2^2) / (2 * LPOA1_L1))));
+    
+    on rotationCenter of shoulderMotor {
+      ShoulderLink arm;
+
+      on end of arm {
+        rotate elbowLoc(-90, 0, 0, 1)
+          SRP5080 elbowMotor(theta = 90 - rad2deg(acos(((x_m + LPOA1_DX)^2 + y_m^2 - LPOA1_L1^2 - LPOA1_L2^2) / (2 * LPOA1_L1 * LPOA1_L2))));
+        
+        on rotationCenter of elbowMotor {
+          ElbowLink foreArm;
+        }
+      }
+    }
+
+    on nominalRotationCenter of shoulderMotor {
+      translate (dy = LPOA1_ARM_FP_DISTANCE, dz = LPOA1_SHCS_TO_SFMCS)
+        rotate (-90, 1, 0, 0)
+          Detector nominalFp;
+    }
+
+    # The SHCS is elevated with respect to the MRP to half of its height
+    translate (dz = MRP8080_HEIGHT / 2 + LPOA1_SHCS_TO_SFMCS + LPOA1_SFMCS_TO_LOBFM)
+      port LOBFMCS;
+  }
+
+  path foreArm to arm.ESM to nominalFp to arm.SFM;
+}
